@@ -13,5 +13,9 @@ func main() {
 
 	routes.SetupRoutes(app)
 
-	log.Fatal(app.Listen(":3001"))
+	log.Println("Server is running on port: 8080")
+	err := app.Listen(":80")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
