@@ -16,4 +16,8 @@ func AuthRequired() func(c *fiber.Ctx) error {
 		},
 	})
 }
-func Signin()
+func Signin(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		"success": false,
+	})
+}

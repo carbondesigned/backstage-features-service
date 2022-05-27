@@ -11,7 +11,7 @@ func SetupRoutes(app *fiber.App) {
 			"message": "Success! 🚀",
 		})
 	})
-	// api := app.Group("/api")
+	api := app.Group("/api")
 
-	// AuthRoutes(api.Group("/auth"))
+	AuthRoutes(api.Group("/auth"))
 }

@@ -1,16 +1,17 @@
 package main
 
 import (
+	"log"
+
 	"github.com/digitalocean/sample-golang/routes"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
 	app := fiber.New()
-	app.Use(cors.New())
+	// app.Use(cors.New())
 
 	routes.SetupRoutes(app)
 
-	app.Listen(":3001")
+	log.Fatal(app.Listen(":3001"))
 }
