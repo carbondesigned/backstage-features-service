@@ -29,9 +29,11 @@ type ConfigDatabase struct {
 var cfg ConfigDatabase
 
 func ConnectDb() {
-	err := cleanenv.ReadConfig(".env", &cfg)
-	if err != nil {
-		log.Fatal("error with .env", err)
+	if os.Getenv("ENVIRONMENT") == "dev" || os.Getenv("ENVIRONMENT") == "" {
+		err := cleanenv.ReadConfig(".env", &cfg)
+		if err != nil {
+			log.Fatal("error with .env", err)
+		}
 	}
 	DB_PASSWORD := os.Getenv("DB_PASSWORD")
 	DB_PORT := os.Getenv("DB_PORT")
