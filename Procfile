@@ -1,1 +1,1 @@
-web: bin/sample-golang
+web: bin/backstage-features-service
