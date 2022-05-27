@@ -4,14 +4,14 @@ import (
 	"log"
 	"os"
 
-	"github.com/digitalocean/sample-golang/db"
-	"github.com/digitalocean/sample-golang/routes"
+	"github.com/carbondesinged/backstage-features-service/database"
+	"github.com/carbondesinged/backstage-features-service/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
-	db.ConnectDb()
+	database.ConnectDb()
 	app := fiber.New()
 	app.Use(cors.New())
 
