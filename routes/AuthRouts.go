@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/carbondesinged/backstage-features-service/controllers"
+	"github.com/carbondesigned/backstage-features-service/controllers"
 	"github.com/gofiber/fiber/v2"
 )
 

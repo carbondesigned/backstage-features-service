@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/carbondesinged/backstage-features-service/database"
-	"github.com/carbondesinged/backstage-features-service/routes"
+	"github.com/carbondesigned/backstage-features-service/database"
+	"github.com/carbondesigned/backstage-features-service/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )

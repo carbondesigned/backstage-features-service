@@ -3,9 +3,9 @@ package controllers
 import (
 	"time"
 
-	database "github.com/carbondesinged/backstage-features-service/database"
-	models "github.com/carbondesinged/backstage-features-service/models"
-	"github.com/carbondesinged/backstage-features-service/utils"
+	database "github.com/carbondesigned/backstage-features-service/database"
+	models "github.com/carbondesigned/backstage-features-service/models"
+	"github.com/carbondesigned/backstage-features-service/utils"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"

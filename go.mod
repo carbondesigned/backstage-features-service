@@ -1,4 +1,4 @@
-module github.com/carbondesinged/backstage-features-service
+module github.com/carbondesigned/backstage-features-service
 
 go 1.18
 

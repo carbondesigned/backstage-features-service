@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/carbondesinged/backstage-features-service/models"
+	"github.com/carbondesigned/backstage-features-service/models"
 	"github.com/ilyakaznacheev/cleanenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
