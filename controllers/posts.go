@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"context"
+
+	"github.com/carbondesigned/backstage-features-service/config"
 	"github.com/carbondesigned/backstage-features-service/database"
 	"github.com/carbondesigned/backstage-features-service/models"
 	"github.com/gofiber/fiber/v2"
@@ -56,6 +59,7 @@ func CreatePost(c *fiber.Ctx) error {
 	author := models.Author{}
 	err = database.DB.Db.Where("id = ?", id).First(&author).Error
 
+	// if the user doesn't exist, they can't create a post (because they are not an author)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
@@ -63,6 +67,19 @@ func CreatePost(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+
+	// we process the image and upload it to a bucket
+	cover := post.Cover
+	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to upload image",
+			"error":   err.Error(),
+		})
+	}
+	// we set the coverURL to the post
+	post.CoverURL = coverURL
 
 	database.DB.Db.Create(&post)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
