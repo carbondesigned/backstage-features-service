@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/carbondesigned/backstage-features-service/models"
 	"github.com/ilyakaznacheev/cleanenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -41,8 +40,6 @@ func ConnectDb() {
 	DB_NAME := os.Getenv("DB_NAME")
 	DB_HOST := os.Getenv("DB_HOST")
 	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v", DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT)
-	// dsn := fmt.Sprintf("postgresql://%v:%v@%v:%v/%v?sslmode=require", DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
-	println(dsn)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
@@ -55,7 +52,7 @@ func ConnectDb() {
 	log.Println("connected")
 	db.Logger = logger.Default.LogMode(logger.Info)
 	log.Println("running migrations")
-	db.AutoMigrate(&models.Author{}, &models.Post{})
+	// db.AutoMigrate(&models.Author{}, &models.Post{})
 
 	DB = Dbinstance{Db: db}
 }

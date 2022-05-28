@@ -6,6 +6,7 @@ import (
 	"github.com/carbondesigned/backstage-features-service/config"
 	"github.com/carbondesigned/backstage-features-service/database"
 	"github.com/carbondesigned/backstage-features-service/models"
+	"github.com/carbondesigned/backstage-features-service/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -81,6 +82,7 @@ func CreatePost(c *fiber.Ctx) error {
 	// we set the coverURL to the post
 	post.CoverURL = coverURL
 
+	post.Slug = utils.GenerateSlugFromTitle(post.Title)
 	database.DB.Db.Create(&post)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
