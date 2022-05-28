@@ -11,4 +11,5 @@ func PostRoutes(route fiber.Router) {
 	route.Put("/:id", controllers.EditPost)
 	route.Get("/:id", controllers.GetPost)
 	route.Delete("/:id", controllers.DeletePost)
+	route.Get("/:id/like", controllers.LikePost)
 }

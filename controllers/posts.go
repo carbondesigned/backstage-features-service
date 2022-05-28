@@ -232,3 +232,17 @@ func DeletePost(c *fiber.Ctx) error {
 		"data":    post,
 	})
 }
+
+func LikePost(c *fiber.Ctx) error {
+	var post models.Post
+	slug := c.Params("id")
+
+	database.DB.Db.Where(
+		"slug = ?",
+		slug,
+	).Model(&post).Update("likes", post.Likes+1)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    post,
+	})
+}
