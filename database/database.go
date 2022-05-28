@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/carbondesigned/backstage-features-service/models"
 	"github.com/ilyakaznacheev/cleanenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -52,7 +53,7 @@ func ConnectDb() {
 	log.Println("connected")
 	db.Logger = logger.Default.LogMode(logger.Info)
 	log.Println("running migrations")
-	// db.AutoMigrate(&models.Author{}, &models.Post{})
+	db.AutoMigrate(&models.Author{}, &models.Post{}, &models.Album{})
 
 	DB = Dbinstance{Db: db}
 }
