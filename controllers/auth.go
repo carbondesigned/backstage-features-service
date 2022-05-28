@@ -9,7 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
-	// "github.com/golang-jwt/jwt/v4"
 )
 
 func AuthRequired() func(c *fiber.Ctx) error {
@@ -23,7 +22,8 @@ func AuthRequired() func(c *fiber.Ctx) error {
 	})
 }
 
-func CreateUser(c *fiber.Ctx) error {
+// It creates a new author
+func CreateAuthor(c *fiber.Ctx) error {
 	author := new(models.Author)
 	if err := c.BodyParser(author); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -61,6 +61,8 @@ func CreateUser(c *fiber.Ctx) error {
 	})
 }
 
+// It takes the email and password from the request body, checks if the user exists, checks if the
+// password is correct, creates a JWT token, and sends it back to the user
 func Signin(c *fiber.Ctx) error {
 	author := new(models.Author)
 	if err := c.BodyParser(&author); err != nil {
