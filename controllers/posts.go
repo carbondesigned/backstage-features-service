@@ -159,6 +159,7 @@ func EditPost(c *fiber.Ctx) error {
 	})
 }
 
+// It gets a post by its slug and increments its views by one
 func GetPost(c *fiber.Ctx) error {
 	var post models.Post
 	slug := c.Params("id")
@@ -173,6 +174,59 @@ func GetPost(c *fiber.Ctx) error {
 	}
 
 	database.DB.Db.Model(&post).Update("views", post.Views+1)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    post,
+	})
+}
+
+// We get the post slug from the URL, check if the post exists, get the user from the token, check if
+// the user exists, and if they do, delete the post
+func DeletePost(c *fiber.Ctx) error {
+	var post models.Post
+
+	// get post slug from url
+	slug := c.Params("id")
+
+	if err := database.DB.Db.Where("slug = ?", slug).First(&post).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Post not found",
+			"error":   err.Error(),
+		})
+	}
+
+	// get user from token
+	token := c.Get("Authorization")
+	claims, err := jwt.Parse(
+		token,
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte("secret"), nil
+		},
+	)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid token",
+			"error":   err.Error(),
+		})
+	}
+
+	id := claims.Claims.(jwt.MapClaims)["id"]
+	author := models.Author{}
+	err = database.DB.Db.Where("id = ?", id).First(&author).Error
+
+	// if the user doesn't exist, they can't delete a post (because they are not an author)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized to delete post",
+			"error":   err.Error(),
+		})
+	}
+
+	database.DB.Db.Delete(&post)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"data":    post,

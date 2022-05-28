@@ -10,4 +10,5 @@ func PostRoutes(route fiber.Router) {
 	route.Post("/create", controllers.CreatePost)
 	route.Put("/:id", controllers.EditPost)
 	route.Get("/:id", controllers.GetPost)
+	route.Delete("/:id", controllers.DeletePost)
 }
