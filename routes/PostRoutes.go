@@ -9,4 +9,5 @@ func PostRoutes(route fiber.Router) {
 	route.Get("/", controllers.GetPosts)
 	route.Post("/create", controllers.CreatePost)
 	route.Put("/:id", controllers.EditPost)
+	route.Get("/:id", controllers.GetPost)
 }

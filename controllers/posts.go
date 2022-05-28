@@ -158,3 +158,23 @@ func EditPost(c *fiber.Ctx) error {
 		"data":    post,
 	})
 }
+
+func GetPost(c *fiber.Ctx) error {
+	var post models.Post
+	slug := c.Params("id")
+
+	err := database.DB.Db.Where("slug = ?", slug).First(&post).Error
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Post not found",
+			"error":   err.Error(),
+		})
+	}
+
+	database.DB.Db.Model(&post).Update("views", post.Views+1)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    post,
+	})
+}
