@@ -46,18 +46,21 @@ func CreateAlbum(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
-	// we process the image and upload it to a bucket
-	cover := album.Cover
-	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"message": "Error trying to upload image",
-			"error":   err.Error(),
-		})
+
+	if album.Cover != "" {
+		// we process the image and upload it to a bucket
+		cover := album.Cover
+		coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Error trying to upload image",
+				"error":   err.Error(),
+			})
+		}
+		// we set the coverURL to the post
+		album.CoverURL = coverURL
 	}
-	// we set the coverURL to the post
-	album.CoverURL = coverURL
 
 	album.Slug = utils.GenerateSlugFromTitle(album.Title)
 	if err := database.DB.Db.Create(&album).Error; err != nil {
@@ -95,7 +98,7 @@ func UploadToAlbum(c *fiber.Ctx) error {
 	var album models.Album
 	var newAlbum models.Album
 
-	albumId := c.Params("id")
+	albumSlug := c.Params("id")
 
 	if err := c.BodyParser(&newAlbum); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -106,7 +109,7 @@ func UploadToAlbum(c *fiber.Ctx) error {
 	}
 
 	// find the album
-	if err := database.DB.Db.Where("id = ?", albumId).First(&album).Error; err != nil {
+	if err := database.DB.Db.Where("slug = ?", albumSlug).First(&album).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Error trying to get album",
@@ -153,6 +156,82 @@ func UploadToAlbum(c *fiber.Ctx) error {
 		// we set the coverURL to the post
 		newAlbum.Images = append(newAlbum.Images, imageURL)
 	}
+
+	if err := database.DB.Db.Model(&album).Updates(newAlbum).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to create album",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    album,
+	})
+}
+
+func EditAlbum(c *fiber.Ctx) error {
+	var album models.Album
+	var newAlbum models.Album
+
+	albumSlug := c.Params("id")
+
+	if err := c.BodyParser(&newAlbum); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to create album",
+			"error":   err.Error(),
+		})
+	}
+
+	// find the album
+	if err := database.DB.Db.Where("slug = ?", albumSlug).First(&album).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to get album",
+			"error":   err.Error(),
+		})
+	}
+
+	token := c.Get("Authorization")
+	claims, err := utils.ParseToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid token",
+			"error":   err.Error(),
+		})
+	}
+
+	id := claims.Claims.(jwt.MapClaims)["id"]
+	author := models.Author{}
+
+	err = database.DB.Db.Where("id = ?", id).First(&author).Error
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Not authorized",
+			"error":   err.Error(),
+		})
+	}
+
+	if album.Cover != newAlbum.Cover {
+		coverURL, err := config.UploadImage(context.TODO(), int(author.ID), newAlbum.Cover)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Error trying to upload image",
+				"error":   err.Error(),
+			})
+		}
+		// we set the coverURL to the post
+		newAlbum.CoverURL = coverURL
+	}
+
+	album.Slug = utils.GenerateSlugFromTitle(newAlbum.Title)
 
 	if err := database.DB.Db.Model(&album).Updates(newAlbum).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
