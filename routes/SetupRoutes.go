@@ -1,8 +1,21 @@
 package routes
 
 import (
+	"github.com/carbondesigned/backstage-features-service/database"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
+
+func Setup() *fiber.App {
+	database.ConnectDb()
+
+	app := fiber.New()
+	app.Use(cors.New())
+
+	SetupRoutes(app)
+
+	return app
+}
 
 func SetupRoutes(app *fiber.App) {
 	app.Get("/", func(c *fiber.Ctx) error {
