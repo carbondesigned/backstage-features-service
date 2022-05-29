@@ -95,3 +95,85 @@ func GetAlbums(c *fiber.Ctx) error {
 		"data":    albums,
 	})
 }
+
+func UploadToAlbum(c *fiber.Ctx) error {
+	var album models.Album
+	var newAlbum models.Album
+
+	albumId := c.Params("id")
+
+	if err := c.BodyParser(&newAlbum); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to create album",
+			"error":   err.Error(),
+		})
+	}
+
+	// find the album
+	if err := database.DB.Db.Where("id = ?", albumId).First(&album).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to get album",
+			"error":   err.Error(),
+		})
+	}
+
+	token := c.Get("Authorization")
+	claims, err := jwt.Parse(
+		token,
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte("secret"), nil
+		},
+	)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid token",
+			"error":   err.Error(),
+		})
+	}
+
+	id := claims.Claims.(jwt.MapClaims)["id"]
+	author := models.Author{}
+
+	err = database.DB.Db.Where("id = ?", id).First(&author).Error
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Not authorized",
+			"error":   err.Error(),
+		})
+	}
+
+	// we process the image and upload it to a bucket
+	images := newAlbum.RootImages
+
+	for _, image := range images {
+		imageURL, err := config.UploadImage(context.TODO(), int(author.ID), image)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Error trying to upload image",
+				"error":   err.Error(),
+			})
+		}
+		// we set the coverURL to the post
+		newAlbum.Images = append(newAlbum.Images, imageURL)
+	}
+
+	if err := database.DB.Db.Model(&album).Updates(newAlbum).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to create album",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    album,
+	})
+}
