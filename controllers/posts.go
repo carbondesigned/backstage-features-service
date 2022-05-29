@@ -42,12 +42,7 @@ func CreatePost(c *fiber.Ctx) error {
 	}
 
 	token := c.Get("Authorization")
-	claims, err := jwt.Parse(
-		token,
-		func(token *jwt.Token) (interface{}, error) {
-			return []byte("secret"), nil
-		},
-	)
+	claims, err := utils.ParseToken(token)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -120,12 +115,7 @@ func EditPost(c *fiber.Ctx) error {
 
 	// get user from token
 	token := c.Get("Authorization")
-	claims, err := jwt.Parse(
-		token,
-		func(token *jwt.Token) (interface{}, error) {
-			return []byte("secret"), nil
-		},
-	)
+	claims, err := utils.ParseToken(token)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -198,12 +188,7 @@ func DeletePost(c *fiber.Ctx) error {
 
 	// get user from token
 	token := c.Get("Authorization")
-	claims, err := jwt.Parse(
-		token,
-		func(token *jwt.Token) (interface{}, error) {
-			return []byte("secret"), nil
-		},
-	)
+	claims, err := utils.ParseToken(token)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
