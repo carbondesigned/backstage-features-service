@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"sync"
 
 	"github.com/carbondesigned/backstage-features-service/config"
 	database "github.com/carbondesigned/backstage-features-service/database"
@@ -14,7 +13,6 @@ import (
 
 func CreateAlbum(c *fiber.Ctx) error {
 	var album models.Album
-	var wg sync.WaitGroup
 
 	if err := c.BodyParser(&album); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -52,8 +50,7 @@ func CreateAlbum(c *fiber.Ctx) error {
 	if album.Cover != "" {
 		// we process the image and upload it to a bucket
 		cover := album.Cover
-		wg.Add(1)
-		coverURL, err := config.UploadImage(&wg, context.TODO(), int(author.ID), cover)
+		coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
@@ -100,7 +97,6 @@ func GetAlbums(c *fiber.Ctx) error {
 func UploadToAlbum(c *fiber.Ctx) error {
 	var album models.Album
 	var newAlbum models.Album
-	var wg sync.WaitGroup
 
 	albumSlug := c.Params("id")
 
@@ -149,7 +145,7 @@ func UploadToAlbum(c *fiber.Ctx) error {
 	images := newAlbum.RootImages
 
 	for _, image := range images {
-		imageURL, err := config.UploadImage(&wg, context.TODO(), int(author.ID), image)
+		imageURL, err := config.UploadImage(context.TODO(), int(author.ID), image)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,
@@ -178,7 +174,6 @@ func UploadToAlbum(c *fiber.Ctx) error {
 func EditAlbum(c *fiber.Ctx) error {
 	var album models.Album
 	var newAlbum models.Album
-	var wg sync.WaitGroup
 
 	albumSlug := c.Params("id")
 
@@ -224,7 +219,7 @@ func EditAlbum(c *fiber.Ctx) error {
 	}
 
 	if album.Cover != newAlbum.Cover {
-		coverURL, err := config.UploadImage(&wg, context.TODO(), int(author.ID), newAlbum.Cover)
+		coverURL, err := config.UploadImage(context.TODO(), int(author.ID), newAlbum.Cover)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"success": false,

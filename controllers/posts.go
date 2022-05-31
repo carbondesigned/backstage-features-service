@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"sync"
 
 	"github.com/carbondesigned/backstage-features-service/config"
 	"github.com/carbondesigned/backstage-features-service/database"
@@ -33,7 +32,6 @@ func GetPosts(c *fiber.Ctx) error {
 // coverURL to the post, we generate a slug from the title, and we create the post
 func CreatePost(c *fiber.Ctx) error {
 	var post models.Post
-	var wg sync.WaitGroup
 
 	if err := c.BodyParser(&post); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -71,15 +69,15 @@ func CreatePost(c *fiber.Ctx) error {
 	cover := post.Cover
 
 	// Uploading the image to a bucket.
-	wg.Add(1)
-	go func() {
-		coverURL, err := config.UploadImage(&wg, context.TODO(), int(author.ID), cover)
-		if err != nil {
-			return
-		}
-		post.Cover = coverURL
-	}()
-	wg.Wait()
+	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to upload image",
+			"error":   err.Error(),
+		})
+	}
+	post.Cover = coverURL
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
@@ -100,7 +98,6 @@ func CreatePost(c *fiber.Ctx) error {
 func EditPost(c *fiber.Ctx) error {
 	var post models.Post
 	var newPost models.Post
-	var wg sync.WaitGroup
 
 	// get post slug from url
 	slug := c.Params("id")
@@ -146,22 +143,6 @@ func EditPost(c *fiber.Ctx) error {
 			"message": "Unauthorized to edit post",
 			"error":   err.Error(),
 		})
-	}
-
-	// Checking if the cover of the post is different from the new cover, if it is, it uploads the image
-	// to a bucket.
-	if post.Cover != newPost.Cover {
-		cover := post.Cover
-		// Uploading the image to a bucket.
-		wg.Add(1)
-		go func() {
-			coverURL, err := config.UploadImage(&wg, context.TODO(), int(author.ID), cover)
-			if err != nil {
-				return
-			}
-			post.Cover = coverURL
-		}()
-		wg.Wait()
 	}
 
 	// If the title of the post is different from the new title, we generate a new slug from the new title
