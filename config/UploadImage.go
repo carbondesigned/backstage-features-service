@@ -1,11 +1,10 @@
 package config
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -25,7 +24,7 @@ type ConfigAWS struct {
 
 var cfg ConfigAWS
 
-func UploadImage(ctx context.Context, userId int, image string) (string, error) {
+func UploadImage(ctx context.Context, userId int, image *multipart.FileHeader) (string, error) {
 	if os.Getenv("ENVIRONMENT") == "dev" || os.Getenv("ENVIRONMENT") == "" {
 		err := cleanenv.ReadConfig(".env", &cfg)
 		if err != nil {
@@ -50,40 +49,54 @@ func UploadImage(ctx context.Context, userId int, image string) (string, error) 
 	}
 	s3Client := s3.New(newSession)
 
-	// return string of the uploaded image
-	file, err := ioutil.ReadFile(image)
+	buffer, err := image.Open()
+
 	if err != nil {
 		return "false", err
 	}
 
-	// get the file name
-	fileName := image[len(image)-14:]
+	defer buffer.Close()
 
-	// get the file type
-	fileType := image[len(image)-4:]
+	fileName := fmt.Sprintf("%d-%s", userId, image.Filename)
 
-	// get the file size
-	fileSize := len(file)
-
-	// get the file buffer
-	fileBuffer := bytes.NewReader(file)
-
-	// get the file key
-	fileKey := fmt.Sprintf("%v/%v", userId, fileName)
-
-	// create the object
 	_, err = s3Client.PutObject(&s3.PutObjectInput{
-		Bucket:        aws.String(SpaceName),
-		Key:           aws.String(fileKey),
-		Body:          fileBuffer,
-		ACL:           aws.String("public-read"),
-		ContentType:   aws.String(fileType),
-		ContentLength: aws.Int64(int64(fileSize)),
+		Bucket:      aws.String(SpaceName),
+		Key:         aws.String(fileName),
+		Body:        buffer,
+		ACL:         aws.String("public-read"),
+		ContentType: aws.String(image.Header.Get("Content-Type")),
 	})
+
 	if err != nil {
 		return "false", err
 	}
 
-	// return the url of the uploaded image
-	return fmt.Sprintf("https://%v.%v.digitaloceanspaces.com/%v", SpaceName, SpaceRegion, fileKey), nil
+	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", SpaceName, fileName), nil
+
+	// stream, readErr := os.Open(image)
+	// if readErr != nil {
+	// 	return "false", readErr
+	// }
+
+	// file, fileErr := stream.Stat()
+	// if fileErr != nil {
+	// 	return "false", fileErr
+	// }
+
+	// fileName := fmt.Sprintf("%d-%s", userId, file.Name())
+	// fileType := file.Name()[len(file.Name())-3:]
+
+	// _, err = s3Client.PutObject(&s3.PutObjectInput{
+	// 	Bucket:      aws.String(SpaceName),
+	// 	Key:         aws.String(fileName),
+	// 	Body:        stream,
+	// 	ACL:         aws.String("public-read"),
+	// 	ContentType: aws.String(fmt.Sprintf("image/%s", fileType)),
+	// })
+
+	// if err != nil {
+	// 	return "false", err
+	// }
+
+	// return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", SpaceName, fileName), nil
 }

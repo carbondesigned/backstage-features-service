@@ -32,6 +32,8 @@ func GetPosts(c *fiber.Ctx) error {
 // coverURL to the post, we generate a slug from the title, and we create the post
 func CreatePost(c *fiber.Ctx) error {
 	var post models.Post
+	c.Accepts("multipart/form-data")
+	c.Request().MultipartForm()
 
 	if err := c.BodyParser(&post); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -66,7 +68,14 @@ func CreatePost(c *fiber.Ctx) error {
 	}
 
 	// we process the image and upload it to a bucket
-	cover := post.Cover
+	cover, err := c.FormFile("cover")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying with cover image",
+			"error":   err.Error(),
+		})
+	}
 
 	// Uploading the image to a bucket.
 	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)

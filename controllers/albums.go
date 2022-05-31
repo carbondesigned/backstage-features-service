@@ -1,9 +1,6 @@
 package controllers
 
 import (
-	"context"
-
-	"github.com/carbondesigned/backstage-features-service/config"
 	database "github.com/carbondesigned/backstage-features-service/database"
 	models "github.com/carbondesigned/backstage-features-service/models"
 	"github.com/carbondesigned/backstage-features-service/utils"
@@ -47,20 +44,20 @@ func CreateAlbum(c *fiber.Ctx) error {
 		})
 	}
 
-	if album.Cover != "" {
-		// we process the image and upload it to a bucket
-		cover := album.Cover
-		coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"success": false,
-				"message": "Error trying to upload image",
-				"error":   err.Error(),
-			})
-		}
-		// we set the coverURL to the post
-		album.CoverURL = coverURL
-	}
+	// if album.Cover != "" {
+	// 	// we process the image and upload it to a bucket
+	// 	cover := album.Cover
+	// 	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
+	// 	if err != nil {
+	// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 			"success": false,
+	// 			"message": "Error trying to upload image",
+	// 			"error":   err.Error(),
+	// 		})
+	// 	}
+	// 	// we set the coverURL to the post
+	// 	album.CoverURL = coverURL
+	// }
 
 	album.Slug = utils.GenerateSlugFromTitle(album.Title)
 	if err := database.DB.Db.Create(&album).Error; err != nil {
@@ -142,20 +139,20 @@ func UploadToAlbum(c *fiber.Ctx) error {
 	}
 
 	// we process the image and upload it to a bucket
-	images := newAlbum.RootImages
+	// images := newAlbum.RootImages
 
-	for _, image := range images {
-		imageURL, err := config.UploadImage(context.TODO(), int(author.ID), image)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"success": false,
-				"message": "Error trying to upload image",
-				"error":   err.Error(),
-			})
-		}
-		// we set the coverURL to the post
-		newAlbum.Images = append(newAlbum.Images, imageURL)
-	}
+	// for _, image := range images {
+	// 	imageURL, err := config.UploadImage(context.TODO(), int(author.ID), image)
+	// 	if err != nil {
+	// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 			"success": false,
+	// 			"message": "Error trying to upload image",
+	// 			"error":   err.Error(),
+	// 		})
+	// 	}
+	// 	// we set the coverURL to the post
+	// 	newAlbum.Images = append(newAlbum.Images, imageURL)
+	// }
 
 	if err := database.DB.Db.Model(&album).Updates(newAlbum).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -218,18 +215,18 @@ func EditAlbum(c *fiber.Ctx) error {
 		})
 	}
 
-	if album.Cover != newAlbum.Cover {
-		coverURL, err := config.UploadImage(context.TODO(), int(author.ID), newAlbum.Cover)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"success": false,
-				"message": "Error trying to upload image",
-				"error":   err.Error(),
-			})
-		}
-		// we set the coverURL to the post
-		newAlbum.CoverURL = coverURL
-	}
+	// if album.Cover != newAlbum.Cover {
+	// 	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), newAlbum.Cover)
+	// 	if err != nil {
+	// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 			"success": false,
+	// 			"message": "Error trying to upload image",
+	// 			"error":   err.Error(),
+	// 		})
+	// 	}
+	// 	// we set the coverURL to the post
+	// 	newAlbum.CoverURL = coverURL
+	// }
 
 	album.Slug = utils.GenerateSlugFromTitle(newAlbum.Title)
 
