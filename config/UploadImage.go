@@ -47,8 +47,8 @@ func UploadImage(ctx context.Context, userId int, image *multipart.FileHeader) (
 	if err != nil {
 		return "false", err
 	}
-	s3Client := s3.New(newSession)
 
+	s3Client := s3.New(newSession)
 	buffer, err := image.Open()
 
 	if err != nil {
@@ -72,31 +72,4 @@ func UploadImage(ctx context.Context, userId int, image *multipart.FileHeader) (
 	}
 
 	return fmt.Sprintf("https://%v.%v.digitaloceanspaces.com/%v", SpaceName, SpaceRegion, fileName), nil
-
-	// stream, readErr := os.Open(image)
-	// if readErr != nil {
-	// 	return "false", readErr
-	// }
-
-	// file, fileErr := stream.Stat()
-	// if fileErr != nil {
-	// 	return "false", fileErr
-	// }
-
-	// fileName := fmt.Sprintf("%d-%s", userId, file.Name())
-	// fileType := file.Name()[len(file.Name())-3:]
-
-	// _, err = s3Client.PutObject(&s3.PutObjectInput{
-	// 	Bucket:      aws.String(SpaceName),
-	// 	Key:         aws.String(fileName),
-	// 	Body:        stream,
-	// 	ACL:         aws.String("public-read"),
-	// 	ContentType: aws.String(fmt.Sprintf("image/%s", fileType)),
-	// })
-
-	// if err != nil {
-	// 	return "false", err
-	// }
-
-	// return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", SpaceName, fileName), nil
 }

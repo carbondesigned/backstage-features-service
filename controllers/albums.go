@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"context"
+
+	"github.com/carbondesigned/backstage-features-service/config"
 	database "github.com/carbondesigned/backstage-features-service/database"
 	models "github.com/carbondesigned/backstage-features-service/models"
 	"github.com/carbondesigned/backstage-features-service/utils"
@@ -95,6 +98,9 @@ func UploadToAlbum(c *fiber.Ctx) error {
 	var album models.Album
 	var newAlbum models.Album
 
+	c.Accepts("multipart/form-data")
+	c.Request().MultipartForm()
+
 	albumSlug := c.Params("id")
 
 	if err := c.BodyParser(&newAlbum); err != nil {
@@ -141,17 +147,31 @@ func UploadToAlbum(c *fiber.Ctx) error {
 	// we process the image and upload it to a bucket
 	// images := newAlbum.RootImages
 
+	// images, err := c.FormFile("images")
+
+	// i need to get the images from the form, which is an array of files
+	// images, err := make(*, 0)
+
+	// if err != nil {
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 		"success": false,
+	// 		"message": "Error trying to upload image",
+	// 		"error":   err.Error(),
+	// 	})
+	// }
 	// for _, image := range images {
-	// 	imageURL, err := config.UploadImage(context.TODO(), int(author.ID), image)
-	// 	if err != nil {
-	// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 			"success": false,
-	// 			"message": "Error trying to upload image",
-	// 			"error":   err.Error(),
-	// 		})
-	// 	}
-	// 	// we set the coverURL to the post
-	// 	newAlbum.Images = append(newAlbum.Images, imageURL)
+	// we process the image and upload it to a bucket
+
+	// imageURL, err := config.UploadImage(context.TODO(), int(author.ID), image)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 		"success": false,
+	// 		"message": "Error trying to upload image",
+	// 		"error":   err.Error(),
+	// 	})
+	// }
+	// // we set the coverURL to the post
+	// newAlbum.Images = append(newAlbum.Images, imageURL)
 	// }
 
 	if err := database.DB.Db.Model(&album).Updates(newAlbum).Error; err != nil {
@@ -171,6 +191,8 @@ func UploadToAlbum(c *fiber.Ctx) error {
 func EditAlbum(c *fiber.Ctx) error {
 	var album models.Album
 	var newAlbum models.Album
+	c.Accepts("multipart/form-data")
+	c.Request().MultipartForm()
 
 	albumSlug := c.Params("id")
 
@@ -214,19 +236,28 @@ func EditAlbum(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+	// we process the image and upload it to a bucket
+	cover, err := c.FormFile("cover")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying with cover image",
+			"error":   err.Error(),
+		})
+	}
 
-	// if album.Cover != newAlbum.Cover {
-	// 	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), newAlbum.Cover)
-	// 	if err != nil {
-	// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 			"success": false,
-	// 			"message": "Error trying to upload image",
-	// 			"error":   err.Error(),
-	// 		})
-	// 	}
-	// 	// we set the coverURL to the post
-	// 	newAlbum.CoverURL = coverURL
-	// }
+	if album.Cover != newAlbum.Cover {
+		coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"message": "Error trying to upload image",
+				"error":   err.Error(),
+			})
+		}
+		// we set the coverURL to the post
+		newAlbum.CoverURL = coverURL
+	}
 
 	album.Slug = utils.GenerateSlugFromTitle(newAlbum.Title)
 
