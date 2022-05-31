@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -25,7 +26,7 @@ type ConfigAWS struct {
 
 var cfg ConfigAWS
 
-func UploadImage(ctx context.Context, userId int, image string) (string, error) {
+func UploadImage(wg *sync.WaitGroup, ctx context.Context, userId int, image string) (string, error) {
 	if os.Getenv("ENVIRONMENT") == "dev" || os.Getenv("ENVIRONMENT") == "" {
 		err := cleanenv.ReadConfig(".env", &cfg)
 		if err != nil {
@@ -83,6 +84,7 @@ func UploadImage(ctx context.Context, userId int, image string) (string, error) 
 	if err != nil {
 		return "false", err
 	}
+	wg.Done()
 
 	// return the url of the uploaded image
 	return fmt.Sprintf("https://%v.%v.digitaloceanspaces.com/%v", SpaceName, SpaceRegion, fileKey), nil
