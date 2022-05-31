@@ -71,7 +71,7 @@ func UploadImage(ctx context.Context, userId int, image *multipart.FileHeader) (
 		return "false", err
 	}
 
-	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", SpaceName, fileName), nil
+	return fmt.Sprintf("https://%v.%v.digitaloceanspaces.com/%v", SpaceName, SpaceRegion, fileName), nil
 
 	// stream, readErr := os.Open(image)
 	// if readErr != nil {
