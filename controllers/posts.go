@@ -78,13 +78,6 @@ func CreatePost(c *fiber.Ctx) error {
 		})
 	}
 	post.Cover = coverURL
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"message": "Error trying to upload image",
-			"error":   err.Error(),
-		})
-	}
 	post.Slug = utils.GenerateSlugFromTitle(post.Title)
 	database.DB.Db.Create(&post)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
