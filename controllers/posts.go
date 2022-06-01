@@ -34,7 +34,7 @@ func CreatePost(c *fiber.Ctx) error {
 	var post models.Post
 	c.Accepts("multipart/form-data")
 	c.Request().MultipartForm()
-
+	
 	if err := c.BodyParser(&post); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
@@ -101,6 +101,9 @@ func EditPost(c *fiber.Ctx) error {
 	var post models.Post
 	var newPost models.Post
 
+	c.Accepts("multipart/form-data")
+	c.Request().MultipartForm()
+
 	// get post slug from url
 	slug := c.Params("id")
 
@@ -147,6 +150,26 @@ func EditPost(c *fiber.Ctx) error {
 		})
 	}
 
+	cover, err := c.FormFile("cover")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying with cover image",
+			"error":   err.Error(),
+		})
+	}
+
+	// Uploading the image to a bucket.
+	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to upload image",
+			"error":   err.Error(),
+		})
+	}
+	newPost.Cover = coverURL
+
 	// If the title of the post is different from the new title, we generate a new slug from the new title
 	if post.Title != newPost.Title {
 		newPost.Slug = utils.GenerateSlugFromTitle(newPost.Title)
@@ -154,7 +177,7 @@ func EditPost(c *fiber.Ctx) error {
 	database.DB.Db.Model(&post).Updates(newPost)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"data":    post,
+		"data":    newPost,
 	})
 }
 
