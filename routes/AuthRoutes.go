@@ -10,4 +10,5 @@ func AuthRoutes(route fiber.Router) {
 	route.Post("/signin", controllers.Signin)
 	route.Get("/", controllers.GetAuthors)
 	route.Get("/:id", controllers.GetAuthor)
+	route.Delete("/:id", controllers.DeleteAuthor)
 }

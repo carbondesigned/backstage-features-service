@@ -48,7 +48,8 @@ func CreateAuthor(c *fiber.Ctx) error {
 	}
 
 	id := claims.Claims.(jwt.MapClaims)["id"]
-	err = database.DB.Db.Where("id = ?", id).First(&author).Error
+	existingAuthor := models.Author{}
+	err = database.DB.Db.Where("id = ?", id).First(&existingAuthor).Error
 
 	// if the user doesn't exist, they can't create a post (because they are not an author)
 	if err != nil {
@@ -61,7 +62,7 @@ func CreateAuthor(c *fiber.Ctx) error {
 
 	foundAuthor := models.Author{}
 	// if user already exists
-	if err := database.DB.Db.Where("email = ?", foundAuthor).First(&author).Error; err == nil {
+	if err := database.DB.Db.Where("email = ?", author.Email).First(&foundAuthor).Error; err == nil {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"success": false,
 			"error":   "User already exists",
@@ -92,7 +93,7 @@ func CreateAuthor(c *fiber.Ctx) error {
 		})
 	}
 
-	// Uploading the image to a bucket.
+	// // Uploading the image to a bucket.
 	authorImageUrl, err := config.UploadImage(context.TODO(), int(author.ID), image)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -101,6 +102,7 @@ func CreateAuthor(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+
 	author.Image = authorImageUrl
 	author.Password = hashedPassword
 	database.DB.Db.Create(&author)
@@ -241,5 +243,53 @@ func GetAuthor(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"data":    author,
+	})
+}
+
+func DeleteAuthor(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var author models.Author
+	if err := database.DB.Db.Where("id = ?", id).First(&author).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Author not found",
+			"error":   err.Error(),
+		})
+	}
+
+	token := c.Get("Authorization")
+	claims, err := utils.ParseToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid token",
+			"error":   err.Error(),
+		})
+	}
+
+	authorId := claims.Claims.(jwt.MapClaims)["id"]
+	existingAuthor := models.Author{}
+	err = database.DB.Db.Where("id = ?", authorId).First(&existingAuthor).Error
+
+	// if the user doesn't exist, they can't create a post (because they are not an author)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized to create a user",
+			"error":   err.Error(),
+		})
+	}
+	err = database.DB.Db.Delete(&author).Error
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error deleting author",
+			"error":   err.Error(),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Author deleted",
 	})
 }
