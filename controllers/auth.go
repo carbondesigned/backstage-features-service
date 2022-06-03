@@ -118,3 +118,41 @@ func Signin(c *fiber.Ctx) error {
 		"token":   t,
 	})
 }
+
+func GetAuthors(c *fiber.Ctx) error {
+	var authors []models.Author
+	if err := database.DB.Db.Find(&authors).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+	token := c.Get("Authorization")
+	claims, err := utils.ParseToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid token",
+			"error":   err.Error(),
+		})
+	}
+
+	id := claims.Claims.(jwt.MapClaims)["id"]
+	author := models.Author{}
+	err = database.DB.Db.Where("id = ?", id).First(&author).Error
+
+	// if the user doesn't exist, they can't create a post (because they are not an author)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized to query authors",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    authors,
+	})
+}
