@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"context"
 	"time"
 
+	"github.com/carbondesigned/backstage-features-service/config"
 	database "github.com/carbondesigned/backstage-features-service/database"
 	models "github.com/carbondesigned/backstage-features-service/models"
 	"github.com/carbondesigned/backstage-features-service/utils"
@@ -25,12 +27,38 @@ func AuthRequired() func(c *fiber.Ctx) error {
 // It creates a new author
 func CreateAuthor(c *fiber.Ctx) error {
 	author := new(models.Author)
+	c.Accepts("multipart/form-data")
+	c.Request().MultipartForm()
+
 	if err := c.BodyParser(author); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
 		})
 	}
+	token := c.Get("Authorization")
+	claims, err := utils.ParseToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid token",
+			"error":   err.Error(),
+		})
+	}
+
+	id := claims.Claims.(jwt.MapClaims)["id"]
+	err = database.DB.Db.Where("id = ?", id).First(&author).Error
+
+	// if the user doesn't exist, they can't create a post (because they are not an author)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized to create a user",
+			"error":   err.Error(),
+		})
+	}
+
 	foundAuthor := models.Author{}
 	// if user already exists
 	if err := database.DB.Db.Where("email = ?", foundAuthor).First(&author).Error; err == nil {
@@ -53,6 +81,27 @@ func CreateAuthor(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+
+	// we process the image and upload it to a bucket
+	image, err := c.FormFile("image")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying with cover image",
+			"error":   err.Error(),
+		})
+	}
+
+	// Uploading the image to a bucket.
+	authorImageUrl, err := config.UploadImage(context.TODO(), int(author.ID), image)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to upload image",
+			"error":   err.Error(),
+		})
+	}
+	author.Image = authorImageUrl
 	author.Password = hashedPassword
 	database.DB.Db.Create(&author)
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
