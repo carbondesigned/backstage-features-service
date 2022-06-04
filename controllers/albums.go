@@ -47,21 +47,6 @@ func CreateAlbum(c *fiber.Ctx) error {
 		})
 	}
 
-	// if album.Cover != "" {
-	// 	// we process the image and upload it to a bucket
-	// 	cover := album.Cover
-	// 	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
-	// 	if err != nil {
-	// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 			"success": false,
-	// 			"message": "Error trying to upload image",
-	// 			"error":   err.Error(),
-	// 		})
-	// 	}
-	// 	// we set the coverURL to the post
-	// 	album.CoverURL = coverURL
-	// }
-
 	album.Slug = utils.GenerateSlugFromTitle(album.Title)
 	if err := database.DB.Db.Create(&album).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -144,35 +129,7 @@ func UploadToAlbum(c *fiber.Ctx) error {
 		})
 	}
 
-	// we process the image and upload it to a bucket
-	// images := newAlbum.RootImages
-
-	// images, err := c.FormFile("images")
-
-	// i need to get the images from the form, which is an array of files
-	// images, err := make(*, 0)
-
-	// if err != nil {
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 		"success": false,
-	// 		"message": "Error trying to upload image",
-	// 		"error":   err.Error(),
-	// 	})
-	// }
-	// for _, image := range images {
-	// we process the image and upload it to a bucket
-
-	// imageURL, err := config.UploadImage(context.TODO(), int(author.ID), image)
-	// if err != nil {
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 		"success": false,
-	// 		"message": "Error trying to upload image",
-	// 		"error":   err.Error(),
-	// 	})
-	// }
-	// // we set the coverURL to the post
-	// newAlbum.Images = append(newAlbum.Images, imageURL)
-	// }
+	// TODO: able to grab image and upload to bucket.
 
 	if err := database.DB.Db.Model(&album).Updates(newAlbum).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
