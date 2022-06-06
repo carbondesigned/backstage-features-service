@@ -29,4 +29,5 @@ func SetupRoutes(app *fiber.App) {
 	AuthRoutes(api.Group("/auth"))
 	PostRoutes(api.Group("/posts"))
 	AlbumRoutes(api.Group("/albums"))
+	ImageRoutes(api.Group("/images"))
 }
