@@ -14,12 +14,14 @@ import (
 func GetImages(c *fiber.Ctx) error {
  var images []models.Image  
 
+ 	// if there is an error getting images from db
   if err := database.DB.Db.Find(&images).Error; err != nil {
     return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
       "success": false, 
       "error": err.Error(),
     })
   }
+
   return c.Status(fiber.StatusOK).JSON(fiber.Map{
     "success": true,
     "data": images,
@@ -29,9 +31,9 @@ func GetImages(c *fiber.Ctx) error {
 func CreateImage(c *fiber.Ctx) error {
   var image models.Image
   
+  // able to read multipart/form-data form
 	c.Accepts("multipart/form-data")
 	c.Request().MultipartForm()
-
 
 	if err := c.BodyParser(&image); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -73,6 +75,7 @@ func CreateImage(c *fiber.Ctx) error {
 	    "error": err.Error(),
 	  })
 	}
+
 	// Uploading the image to a bucket.
 	imageURL, err := config.UploadImage(context.TODO(), int(author.ID), newImage)
 	if err != nil {
@@ -82,8 +85,10 @@ func CreateImage(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+
 	image.ImageURL = imageURL
 	database.DB.Db.Create(&image)
+
   return c.Status(fiber.StatusOK).JSON(fiber.Map{
     "success": true,
     "data": image,

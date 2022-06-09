@@ -130,7 +130,6 @@ func UploadToAlbum(c *fiber.Ctx) error {
 	}
 
 	// TODO: able to grab image and upload to bucket.
-
 	if err := database.DB.Db.Model(&album).Updates(newAlbum).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
@@ -193,6 +192,7 @@ func EditAlbum(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+
 	// we process the image and upload it to a bucket
 	cover, err := c.FormFile("cover")
 	if err != nil {
@@ -212,7 +212,7 @@ func EditAlbum(c *fiber.Ctx) error {
 				"error":   err.Error(),
 			})
 		}
-		// we set the coverURL to the post
+
 		newAlbum.CoverURL = coverURL
 	}
 
