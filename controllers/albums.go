@@ -46,6 +46,27 @@ func CreateAlbum(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+	// we process the image and upload it to a bucket
+	cover, err := c.FormFile("cover")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying with cover image",
+			"error":   err.Error(),
+		})
+	}
+	// Uploading the image to a bucket.
+	coverURL, err := config.UploadImage(context.TODO(), int(author.ID), cover)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to upload image",
+			"error":   err.Error(),
+		})
+	}
+
+	// set the image URL from bucket to post's cover.
+	album.Cover = coverURL
 
 	album.Slug = utils.GenerateSlugFromTitle(album.Title)
 	if err := database.DB.Db.Create(&album).Error; err != nil {
