@@ -138,7 +138,7 @@ func Signin(c *fiber.Ctx) error {
 	if !utils.CheckPasswordHash(password, foundAuthor.Password) {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
-			"error":   "Incorrect password",
+			"error":   "Incorrect password and/or email.",
 		})
 	}
 	// Create the Claims
