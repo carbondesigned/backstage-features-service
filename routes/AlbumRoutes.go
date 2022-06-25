@@ -11,4 +11,5 @@ func AlbumRoutes(route fiber.Router) {
 	route.Post("/:id/upload", controllers.UploadToAlbum)
 	// route.Get("/:id", controllers.GetAlbum)
 	route.Post("/:id", controllers.EditAlbum)
+	route.Delete("/:id", controllers.DeleteAlbum)
 }

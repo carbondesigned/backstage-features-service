@@ -252,3 +252,49 @@ func EditAlbum(c *fiber.Ctx) error {
 		"data":    album,
 	})
 }
+
+func DeleteAlbum(c *fiber.Ctx) error {
+	var album models.Album
+
+	// get post slug from url
+	slug := c.Params("id")
+
+	if err := database.DB.Db.Where("slug = ?", slug).First(&album).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Album not found",
+			"error":   err.Error(),
+		})
+	}
+
+	// get user from token
+	token := c.Get("Authorization")
+	claims, err := utils.ParseToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid token",
+			"error":   err.Error(),
+		})
+	}
+
+	id := claims.Claims.(jwt.MapClaims)["id"]
+	author := models.Author{}
+	err = database.DB.Db.Where("id = ?", id).First(&author).Error
+
+	// if the user doesn't exist, they can't delete a post (because they are not an author)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized to delete album",
+			"error":   err.Error(),
+		})
+	}
+
+	database.DB.Db.Delete(&album)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    album,
+	})
+}
