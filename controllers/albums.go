@@ -105,7 +105,6 @@ func UploadToAlbum(c *fiber.Ctx) error {
 	var newAlbum models.Album
 
 	c.Accepts("multipart/form-data")
-	c.Request().MultipartForm()
 
 	albumSlug := c.Params("id")
 
@@ -165,11 +164,29 @@ func UploadToAlbum(c *fiber.Ctx) error {
 	})
 }
 
+func GetAlbum(c *fiber.Ctx) error {
+	// get album by it's slug
+	var album models.Album
+	albumSlug := c.Params("id")
+
+	if err := database.DB.Db.Where("slug = ?", albumSlug).First(&album).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to get album",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    album,
+	})
+}
+
 func EditAlbum(c *fiber.Ctx) error {
 	var album models.Album
 	var newAlbum models.Album
 	c.Accepts("multipart/form-data")
-	c.Request().MultipartForm()
 
 	albumSlug := c.Params("id")
 
