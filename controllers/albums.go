@@ -149,11 +149,33 @@ func UploadToAlbum(c *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: able to grab image and upload to bucket.
-	if err := database.DB.Db.Model(&album).Updates(newAlbum).Error; err != nil {
+	// take a single image and add it to an array of the album's images
+	image, err := c.FormFile("image")
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Error trying to create album",
+			"message": "Error trying with image",
+			"error":   err.Error(),
+		})
+	}
+	// Uploading the image to a bucket.
+	imageURL, err := config.UploadImage(context.TODO(), int(author.ID), image)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to upload image",
+			"error":   err.Error(),
+		})
+	}
+
+	// add the image to the album's images array
+	album.Images = append(album.Images, imageURL)
+
+	// update the album
+	if err := database.DB.Db.Save(&album).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error trying to update album",
 			"error":   err.Error(),
 		})
 	}
